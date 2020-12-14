@@ -93,5 +93,18 @@ class TestUserUrls(TestCase):
         resolve_urlname = resolve(f"/users/{self.user.username}/").view_name
         self.assertEqual(resolve_urlname, "users:detail")
 
+    def test_update_reverse(self):
+        reverse_url = reverse("users:update")
+        self.assertEqual(reverse_url, "~update/")
 
+    def test_update_resolve(self):
+        resolve_urlname = resolve("~update/").view_name
+        self.assertEqual(resolve_urlname, "users:update")
 
+    def test_redirect_reverse(self):
+        reverse_url = reverse("users:redirect")
+        self.assertEqual(reverse_url, "~redirect/")
+
+    def test_redirect_resolve(self):
+        resolve_urlname = resolve("~redirect/").view_name
+        self.assertEqual(resolve_urlname, "users:redirect")
