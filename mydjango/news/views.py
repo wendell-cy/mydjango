@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import  login_required
 from django.template.loader import  render_to_string
 from django.views.decorators.http import require_http_methods
 # noinspection PyUnresolvedReferences
-# from mydjango.utils import ajax_required
+from mydjango.utils import ajax_required
 # Create your views here.
 from django.views.generic import ListView
 from mydjango.news.models import News
