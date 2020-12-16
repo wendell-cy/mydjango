@@ -85,8 +85,11 @@
           <li class="nav-item active" id="home">
             <a class="nav-link" href="{% url 'home' %}">首 页<span class="sr-only">(current)</span></a>
           </li>
+          <li class="nav-item" id="about">
+            <a class="nav-link" href="{% url 'about' %}">关 于</a>
+          </li>
           <li class="nav-item active" id="news">
-            <a class="nav-link" href="{% url 'news' %}">新闻动态<span class="sr-only">(current)</span></a>
+            <a class="nav-link" href="{% url 'news:list' %}">新闻动态<span class="sr-only">(current)</span></a>
           </li>
           <li class="nav-item active" id="blogs">
             <a class="nav-link" href="{% url 'blogs' %}">博客文章<span class="sr-only">(current)</span></a>
@@ -97,9 +100,7 @@
           <li class="nav-item active" id="chat">
             <a class="nav-link" href="{% url 'chat' %}">在线聊天<span class="sr-only">(current)</span></a>
           </li>
-          <li class="nav-item" id="about">
-            <a class="nav-link" href="{% url 'about' %}">关 于</a>
-          </li>
+
           {% if request.user.is_authenticated %}
             <li class="nav-item" id="users">
               {#                 URL provided by django-allauth/account/urls.py #}
@@ -177,6 +178,7 @@
       <script src="{% static 'bootstrap-4.3.1-dist/js/bootstrap.min.js' %}"></script>
       <script src="{% static 'js/project.js' %}"></script>
       <script>
+        const currentUser = "{{ request.user.username }}";
         $(function () {
           let flags = ['news', 'about', 'blogs', 'quora', 'chat', 'sigup', 'login', 'users', 'logout'];
           let href = window.location.href;

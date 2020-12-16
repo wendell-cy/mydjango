@@ -23,8 +23,8 @@ class User(AbstractUser):
     zhihu = models.URLField(max_length=50, null=True, blank=True, verbose_name='知乎链接', default='')
     github = models.URLField(max_length=50, null=True, blank=True, verbose_name='GitHub链接', default='')
     linkedin = models.URLField(max_length=50, null=True, blank=True, verbose_name='LinkedIn链接', default='')
-    create_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    update_at = models.DateTimeField(auto_now=True,verbose_name="更新时间")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True,verbose_name="更新时间")
 
     class Meta:
         verbose_name = '用户'
