@@ -1,5 +1,5 @@
 {% load static thumbnail humanize %}
-<li class="news-item" style="list-style: none">
+<li class="news-item" style="list-style: none" news-id="{{ news.pk }}">
   <div class="media">
     {% thumbnail news.user.avatar "x100" as im %}
       <img src="{{ im.url }}" style="border-radius: 50%" alt="用户头像" class="align-self-start mr-3"/>
@@ -10,7 +10,7 @@
     <div class="media-body">
       <h5 class="mt-0">{{ news.user.get_profile_name }}
         {% if request.user.username == news.user.username %}
-          <a href="#"><i class="fa fa-times pull-right" title="点击删除这条动态"></i></a>
+          <a href="{% url 'news:delete_news' news.pk %}"><i class="fa fa-times pull-right" title="点击删除这条动态"></i></a>
         {% endif %}
 
       </h5>
@@ -25,10 +25,15 @@
           {% endif %}
           <span class="like-count">{{ news.likers_count }}</span>
         </a>
-        <a href="#" class="reply pull-right mr-3">
+        <a href="#" class="reply pull-right mr-3" data-toggle="modal" data-target="#replyListModal">
           <i class="fa fa-comment-o " aria-hidden="true"></i>
           <span class="reply-count">{{ news.replies_count }}</span>
         </a>
+        <button type="button" class="btn btn-sm btn-outline-primary pull-right mr-3" data-toggle="modal"
+                data-target="#replyFormModal"
+                data-newsid="{{ news.pk }}"
+                data-who="@{{ news.user.username }}">回复
+        </button>
         <span class="timestamp pull-left">{{ news.updated_at|naturaltime }}</span>
       </div>
     </div>

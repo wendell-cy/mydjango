@@ -74,11 +74,13 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",
     'allauth.socialaccount.providers.weixin',
     'sorl.thumbnail',
+    "taggit",
 ]
 
 LOCAL_APPS = [
     "mydjango.users.apps.UsersConfig",
     "mydjango.news.apps.NewsConfig",
+    "mydjango.blogs.apps.BlogsConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
