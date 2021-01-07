@@ -1,14 +1,32 @@
 import uuid
+from collections import Counter
 
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.conf import settings
 
 # Create your models here.
+from slugify import slugify
 from taggit.managers import TaggableManager
 
 
+class Vote(models.Model):
+    """使用django中的contenttype，同时关联用户对问题的和回答的投票"""
+    uuid_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="votes",
+                             on_delete=models.CASCADE, verbose_name="用户")
+    value = models.BooleanField(default=True, verbose_name="赞同或反对")
+    content_type = models.ForeignKey(ContentType, related_name="votes_on", on_delete=models.CASCADE)
+    object_id = models.CharField(max_length=255)
+    vote = GenericForeignKey('content_type', 'object_id')
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = "投票"
+        verbose_name_plural = verbose_name
 
 class QuestionQuerySet(models.query.QuerySet):
     """自定义queryset ，提高模型的可用性"""
@@ -17,7 +35,7 @@ class QuestionQuerySet(models.query.QuerySet):
         """已有正确答案的问题"""
         return self.filter(has_answer=True)
 
-    def get_unanswered(self):
+    def get_uncorrect_answered(self):
         """未被正确回答的问题"""
         return self.filter(has_answer=False)
 
@@ -25,7 +43,7 @@ class QuestionQuerySet(models.query.QuerySet):
         """返回所有问题标签大于0的数量"""
         tag_dict ={}
         # query = self.filter(status="P").annotate(tagged=Count('tags')).filter(tags__gt=0)
-        for obj in query:
+        for obj in self.all():
             for tag in obj.tags.names():
                 if tag not in tag_dict:
                     tag_dict[tag] = 1
@@ -46,7 +64,7 @@ class Question(models.Model):
     has_correct = models.BooleanField(default=False, verbose_name="是否有正确回答")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-
+    votes = GenericRelation(Vote, verbose_name="投票情况")
     objects = QuestionQuerySet.as_manager()
 
     class Meta:
@@ -56,6 +74,11 @@ class Question(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super(Question, self).save(*args, **kwargs)
 
     def get_all_answers(self):
         """获取所有的问答"""
@@ -67,7 +90,22 @@ class Question(models.Model):
 
     def get_accepted_answer(self):
         """被接受的答案"""
-        return Answer.objects.get(question=self,is_accepted=True)
+        return Answer.objects.get(question=self, is_accepted=True)
+
+    def get_upvoters(self):
+        """赞同的用户"""
+        return [vote.user for vote in self.votes.filter(value=True)]
+
+    def get_downvoters(self):
+        """反对的用户"""
+        return [vote.user for vote in self.votes.filter(value=False)]
+
+    def total_votes(self):
+        """得票数"""
+        # return len(self.get_upvoters()) - len(self.get_downvoters())
+        dic = Counter(self.votes.values_list('value', flat=True))
+        return dic[True] - dic[False]
+
 
 class Answer(models.Model):
     uuid_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False )
@@ -77,25 +115,26 @@ class Answer(models.Model):
     is_accepted = models.BooleanField(default=False, verbose_name="是否被接受")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    votes = GenericRelation(Vote, verbose_name="投票情况")
 
     class Meta:
-        verbose_name = "回答"
+        verbose_name = "答案"
         verbose_name_plural = verbose_name
         ordering = ('-is_accepted', "-created_at")
 
-class Vote(models.Model):
-    """使用django中的contenttype，同时关联用户对问题的和回答的投票"""
-    uuid_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="votes",
-                             on_delete=models.CASCADE, verbose_name="用户")
-    value = models.BooleanField(default=True, verbose_name="赞同或反对")
-    content_type = models.ForeignKey(ContentType, related_name="votes_on", on_delete=models.CASCADE)
-    object_id = models.CharField(max_length=255)
-    vote = GenericForeignKey('content_type', 'object_id')
+    def __str__(self):
+        return self.uuid_id.__str__()
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    def get_upvoters(self):
+        """赞同的用户"""
+        return [vote.user for vote in self.votes.filter(value=True)]
 
-    class Meta:
-        verbose_name = "投票"
-        verbose_name_plural = verbose_name
+    def get_downvoters(self):
+        """反对的用户"""
+        return [vote.user for vote in self.votes.filter(value=False)]
+
+    def total_votes(self):
+        """得票数"""
+        # return len(self.get_upvoters()) - len(self.get_downvoters())
+        dic = Counter(self.votes.values_list('value', flat=True))
+        return dic[True] - dic[False]
